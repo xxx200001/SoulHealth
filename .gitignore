@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# 运行时数据：数据库、上传件、生成的报告
+data/soulhealth.db
+data/uploads/
+data/reports/
+data/*.sqlite.broken
+
+# 前端
+web/node_modules/
+web/dist/
+npm-debug.log*
+
+.DS_Store
+.idea/
+.vscode/
