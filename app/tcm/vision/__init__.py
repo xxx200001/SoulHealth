@@ -29,11 +29,13 @@ import numpy as np
 
 from ... import config
 from .. import adapters
+from .deep_engine import get_deep_engine
 from .face import FaceQuantizer
 from .tongue import TongueQuantizer, quality_gate as tongue_quality_gate
 
 _tongue_q = TongueQuantizer()
 _face_q = FaceQuantizer()
+_deep_engine = get_deep_engine()
 
 
 def b64_to_rgb(b64str: str) -> np.ndarray:
