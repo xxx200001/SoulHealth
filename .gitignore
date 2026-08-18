@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 运行时临时数据
+data/uploads/*
+!data/uploads/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
+data/*.sqlite.broken
+
+# 前端依赖与产物
+web/node_modules/
+web/dist/
+npm-debug.log*
+
+.DS_Store
+.idea/
+.vscode/

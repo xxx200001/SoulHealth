@@ -1,0 +1,18 @@
+# ---- 运行必需 ----
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9        # 文件上传（化验单图片）
+httpx>=0.27                    # 生物计算服务调用（AlphaFold / Ensembl / EVO2）
+numpy>=1.26                    # 舌面诊量化
+opencv-python-headless>=4.9    # 舌面诊图像处理（服务器无 GUI 用 headless）
+
+# ---- 真实模型链路（配置 ANTHROPIC_API_KEY 后必装）----
+# 化验单图片抽取、健康问答、AI 综合解读、报告润色均走此 SDK；
+# 不装则这四项在真实模式下会失败（离线的辨证/组方/风险识别不受影响）。
+anthropic>=0.34
+
+# ---- 可选增强 ----
+# mediapipe>=0.10              # 面诊 478 点关键点分区量化；不装则退化为整图颜色分析
+# paddleocr>=2.7               # 化验单本地 OCR 兜底；不装则只走视觉模型抽取
+
+# 说明：中医知识库（data/tcm_kb.sqlite）与 docx 生成均使用标准库实现，无额外依赖。
