@@ -50,11 +50,17 @@ def _load_model():
         from evo2 import Evo2
         model_dir = os.getenv("EVO2_MODEL_DIR", "")
         if model_dir:
-            _model = Evo2(model_dir)
-            log.info("从本地目录加载: %s", model_dir)
+            try:
+                _model = Evo2(_model_name, checkpoint_path=model_dir)
+            except TypeError:
+                try:
+                    _model = Evo2(_model_name, checkpoint=model_dir)
+                except TypeError:
+                    _model = Evo2(_model_name)
+            log.info("从本地模型路径加载: %s", model_dir)
         else:
             _model = Evo2(_model_name)
-            log.info("从 HuggingFace 加载: %s", _model_name)
+            log.info("从 HuggingFace/镜像 加载: %s", _model_name)
     except Exception as exc:
         log.error("EVO2 模型加载失败: %s", exc)
         raise
