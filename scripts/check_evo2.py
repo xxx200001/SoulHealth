@@ -87,7 +87,7 @@ def main() -> None:
          f"ref_ll={result['ref_ll']}  alt_ll={result['alt_ll']}  "
          f"打分口径={result.get('scoring_method')}  "
          f"{'平均每 token' if result.get('normalized') else '整窗求和'}")
-    print("\n全链路打通 ✔  分析页的生物计算一节会显示真实分值与来源标签。")
+    print("\n全链路打通 [OK]  分析页的生物计算一节会显示真实分值与来源标签。")
 
 
 if __name__ == "__main__":

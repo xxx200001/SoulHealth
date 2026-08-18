@@ -25,6 +25,7 @@ from . import ensembl_client
 
 _TIMEOUT = 45
 _RSID = re.compile(r"(rs\d+)")
+_direct_opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 @lru_cache(maxsize=1)
@@ -53,7 +54,7 @@ def _evo2_health() -> dict:
         base = url.rsplit("/v1/", 1)[0] if "/v1/" in url else url
         req = urllib.request.Request(f"{base}/health",
                                      headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with _direct_opener.open(req, timeout=5) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         if data.get("status") != "ok":
             return {"up": False, "model_loaded": False,
@@ -80,7 +81,7 @@ def _real_score(ref_seq: str, alt_seq: str) -> dict:
         headers["Authorization"] = f"Bearer {config.NVIDIA_API_KEY}"
     req = urllib.request.Request(
         config.EVO2_URL, data=payload, method="POST", headers=headers)
-    with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
+    with _direct_opener.open(req, timeout=_TIMEOUT) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 

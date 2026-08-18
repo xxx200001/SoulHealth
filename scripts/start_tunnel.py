@@ -16,6 +16,7 @@ import sys
 import glob
 import shutil
 import subprocess
+import webbrowser
 
 port = sys.argv[1] if len(sys.argv) > 1 else "5173"
 
@@ -26,14 +27,24 @@ print("=" * 58 + "\n", flush=True)
 
 def find_cloudflared():
     """查找 cloudflared 可执行文件"""
-    # 1. PATH 中
+    # 1. scripts 目录或项目根目录
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(cur_dir)
+    candidates = [
+        os.path.join(cur_dir, "cloudflared.exe"),
+        os.path.join(cur_dir, "cloudflared"),
+        os.path.join(root_dir, "cloudflared.exe"),
+        os.path.join(root_dir, "cloudflared"),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+
+    # 2. 系统 PATH 中
     cf = shutil.which("cloudflared")
     if cf:
         return cf
-    # 2. 当前目录
-    local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cloudflared.exe")
-    if os.path.isfile(local):
-        return local
+
     # 3. winget 安装路径
     appdata = os.environ.get("LOCALAPPDATA", "")
     if appdata:
@@ -48,7 +59,7 @@ def find_cloudflared():
 def launch_tunnel():
     cf_exe = find_cloudflared()
     if cf_exe:
-        print(f"[OK] 使用 cloudflared: {cf_exe}", flush=True)
+        print(f"[OK] 使用本地 cloudflared: {cf_exe}", flush=True)
         cmd = [cf_exe, "tunnel", "--url", f"http://localhost:{port}"]
         return subprocess.Popen(
             cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -56,8 +67,7 @@ def launch_tunnel():
         )
 
     # 4. 回退到 npx
-    print("[*] 未找到本地 cloudflared，尝试 npx 临时下载...", flush=True)
-    # 确保 npm 全局目录存在
+    print("[*] 未找到本地 cloudflared，尝试 npx 临时调用...", flush=True)
     npm_dir = os.path.join(os.environ.get("APPDATA", ""), "npm")
     os.makedirs(npm_dir, exist_ok=True)
     cmd = f'npx --yes cloudflared tunnel --url http://localhost:{port}'
@@ -73,9 +83,7 @@ try:
     proc = launch_tunnel()
 except Exception as e:
     print(f"[错误] 无法启动穿透: {e}", flush=True)
-    print("\n请手动安装 cloudflared:", flush=True)
-    print("  winget install Cloudflare.cloudflared", flush=True)
-    print("  或从 https://github.com/cloudflare/cloudflared/releases 下载", flush=True)
+    print("\n请安装 cloudflared 或将 cloudflared.exe 放入 scripts 目录", flush=True)
     input("\n按回车退出...")
     sys.exit(1)
 
@@ -89,9 +97,22 @@ for line in proc.stdout:
         found = True
         url = m.group(1)
         print("\n" + "=" * 62, flush=True)
-        print(f"  公网访问链接: {url}", flush=True)
+        print(f"  [√] 公网访问链接已生成: {url}", flush=True)
         print("=" * 62, flush=True)
-        print(f"\n  把上面的链接发给别人，即可在外网访问本系统！", flush=True)
+        # 尝试复制到剪贴板
+        try:
+            subprocess.run("clip", input=url.strip().encode("utf-8"),
+                           check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            print("  [提示] 链接已自动复制到剪贴板！", flush=True)
+        except Exception:
+            pass
+        # 自动在浏览器中打开
+        try:
+            webbrowser.open(url)
+            print("  [提示] 已自动在默认浏览器中打开公网链接！", flush=True)
+        except Exception:
+            pass
+        print(f"\n  把上面的链接发给他人，即可在外网直接访问与演示本系统！", flush=True)
         print(f"  按 Ctrl+C 停止穿透\n", flush=True)
 
 proc.wait()
