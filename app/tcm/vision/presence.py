@@ -36,17 +36,17 @@ import numpy as np
 VERSION = "1.0.0-presence-gate"
 
 GATE = {
-    "min_redness_a": 137.0,     # a* 均值下限（OpenCV Lab 中 128 为中性）
-    "warn_redness_a": 141.0,    # 低于此值判为低置信度
-    "min_fill": 0.04,           # 舌体至少占画面 4%
-    "max_fill": 0.85,           # 超过 85% 视为未能与背景分离
-    "min_dominance": 0.55,      # 最大连通域须占候选像素过半
-    "min_solidity": 0.78,       # 舌体近凸形
-    "aspect_range": (0.40, 2.40),
-    "max_edge_density": 0.075,  # 区域内边缘密度上限（印刷文字远超此值）
-    "min_texture_std": 2.0,     # 区域内 L 标准差下限：纯色填充块不是照片
-    "max_border_sides": 2,      # 触边不超过两条
-    "min_pixels": 1500,
+    "min_redness_a": 133.0,     # a* 均值下限（OpenCV Lab 中 128 为中性，真实舌象通常 > 133）
+    "warn_redness_a": 138.0,    # 低于此值判为低置信度
+    "min_fill": 0.02,           # 舌体至少占画面 2%
+    "max_fill": 0.98,           # 放宽至 98%，支持充满画面的特写大图
+    "min_dominance": 0.35,      # 最大连通域占比放宽
+    "min_solidity": 0.55,       # 凸包占比放宽，兼容伸舌形态与特写裁剪
+    "aspect_range": (0.20, 4.00),# 长宽比区间放宽
+    "max_edge_density": 0.15,   # 边缘密度上限
+    "min_texture_std": 1.0,     # 质地标准差下限
+    "max_border_sides": 4,      # 允许特写（触边可达 4 条边），不硬性拦截
+    "min_pixels": 500,
 }
 
 
@@ -77,12 +77,12 @@ def segment(rgb: np.ndarray, external_mask: Optional[np.ndarray] = None) -> np.n
     # Otsu 找"比画面整体更红"的一侧
     thr, _ = cv2.threshold(a, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     # 至少要比中性红一点，避免整幅中性图被从中间劈开
-    thr = max(float(thr), 132.0)
+    thr = max(float(thr), 130.0)
     mask = a > thr
 
-    # 同时要求有基本饱和度与亮度，滤掉暗角与高光死白
+    # 同时要求有基本饱和度与亮度，滤掉极暗角与过爆死白（兼容白厚苔）
     hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)
-    mask &= (hsv[..., 1] > 35) & (hsv[..., 2] > 45) & (hsv[..., 2] < 250)
+    mask &= (hsv[..., 1] > 18) & (hsv[..., 2] > 35)
 
     k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
     m8 = cv2.morphologyEx(mask.astype(np.uint8), cv2.MORPH_CLOSE, k)
