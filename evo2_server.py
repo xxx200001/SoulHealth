@@ -48,19 +48,23 @@ def _load_model():
 
     try:
         from evo2 import Evo2
-        model_dir = os.getenv("EVO2_MODEL_DIR", "")
+        model_dir = os.getenv("EVO2_MODEL_DIR", "").strip()
+        if not model_dir:
+            for candidate in (
+                "/mnt/c/Users/Administrator/Desktop/新建文件夹/evo2_7b/evo2_7b.pt",
+                "/home/user/models/evo2_7b.pt",
+                "/home/user/models/evo2_7b",
+            ):
+                if os.path.exists(candidate):
+                    model_dir = candidate
+                    break
+
         if model_dir:
-            try:
-                _model = Evo2(_model_name, checkpoint_path=model_dir)
-            except TypeError:
-                try:
-                    _model = Evo2(_model_name, checkpoint=model_dir)
-                except TypeError:
-                    _model = Evo2(_model_name)
-            log.info("从本地模型路径加载: %s", model_dir)
+            log.info("从本地权重路径加载 (local_path): %s", model_dir)
+            _model = Evo2(_model_name, local_path=model_dir)
         else:
-            _model = Evo2(_model_name)
             log.info("从 HuggingFace/镜像 加载: %s", _model_name)
+            _model = Evo2(_model_name)
     except Exception as exc:
         log.error("EVO2 模型加载失败: %s", exc)
         raise
